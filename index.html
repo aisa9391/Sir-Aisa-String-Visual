@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>String Scale Visualizer — Violin · Viola · Cello · Bass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0e1015;
+    --bg-panel: #161922;
+    --bg-elevated: #1f2330;
+    --bg-fingerboard-1: #3d2517;
+    --bg-fingerboard-2: #5a3520;
+    --bg-fingerboard-3: #2a1810;
+    --string-color: #d4c5a0;
+    --fret-color: #6b6258;
+    --text-primary: #e8e5dc;
+    --text-secondary: #8b8578;
+    --text-tertiary: #5a564c;
+    --accent-gold: #c9a449;
+    --accent-rust: #b8552c;
+    --note-root: #d63838;
+    --note-tone: #4a7ab8;
+    --note-semi: #4caf50;
+    --note-aug: #e8843d;
+    --note-arp-major: #4a7ab8;
+    --note-arp-minor: #4caf50;
+    --note-arp-dim: #9c5dbf;
+    --note-arp-aug: #e8569e;
+    --border-subtle: rgba(201, 164, 73, 0.15);
+    --shadow-deep: 0 12px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-image:
+      radial-gradient(ellipse at top, rgba(201, 164, 73, 0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at bottom, rgba(184, 85, 44, 0.03) 0%, transparent 60%);
+    padding: 24px 16px 80px;
+  }
+
+  .app {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: clamp(28px, 5vw, 44px);
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  header h1 em {
+    font-style: italic;
+    color: var(--accent-gold);
+    font-weight: 600;
+  }
+  header .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--text-tertiary);
+  }
+
+  /* ===== CONTROL PANEL ===== */
+  .controls {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    box-shadow: var(--shadow-deep);
+  }
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .control-group label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-tertiary);
+  }
+  .control-group select, .control-group input[type="range"] {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .control-group select:hover, .control-group select:focus {
+    border-color: var(--accent-gold);
+    outline: none;
+  }
+  .control-group select optgroup {
+    background: var(--bg-deep);
+    color: var(--accent-gold);
+    font-style: normal;
+    font-weight: 600;
+  }
+  .control-group select option {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    font-style: normal;
+  }
+
+  /* ===== ACTION BAR ===== */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+  .btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn:hover {
+    border-color: var(--accent-gold);
+    background: rgba(201, 164, 73, 0.08);
+  }
+  .btn.primary {
+    background: linear-gradient(135deg, var(--accent-gold) 0%, #b08c30 100%);
+    color: #1a1410;
+    border-color: var(--accent-gold);
+    font-weight: 600;
+  }
+  .btn.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(201, 164, 73, 0.3);
+  }
+  .btn.danger {
+    background: var(--bg-elevated);
+    border-color: rgba(214, 56, 56, 0.4);
+    color: #d63838;
+  }
+  .btn.danger:hover {
+    background: rgba(214, 56, 56, 0.1);
+    border-color: var(--note-root);
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .toggle-row {
+    display: flex;
+    gap: 14px;
+    margin-left: auto;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .toggle-row label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .toggle-row input[type="checkbox"] {
+    accent-color: var(--accent-gold);
+    cursor: pointer;
+  }
+  .bpm-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-panel);
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+  }
+  .bpm-control label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .bpm-control input[type="range"] {
+    width: 100px;
+    accent-color: var(--accent-gold);
+  }
+  .bpm-control .bpm-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent-gold);
+    min-width: 32px;
+    font-weight: 600;
+  }
+
+  /* ===== FINGERBOARD ===== */
+  .fingerboard-wrapper {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 28px 20px 20px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    box-shadow: var(--shadow-deep);
+  }
+  .fingerboard-scroll {
+    min-width: 900px;
+  }
+  .fingerboard-scroll[data-frets="17"] { min-width: 1200px; }
+  .fingerboard-scroll[data-frets="24"] { min-width: 1600px; }
+  .fret-numbers {
+    display: flex;
+    margin-bottom: 6px;
+    padding-left: 56px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .fret-numbers span {
+    text-align: center;
+    letter-spacing: 1px;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .fret-numbers span:first-child {
+    text-align: right;
+    padding-right: 8px;
+  }
+  .fingerboard {
+    background:
+      linear-gradient(180deg, var(--bg-fingerboard-3) 0%, var(--bg-fingerboard-1) 50%, var(--bg-fingerboard-3) 100%),
+      linear-gradient(90deg, var(--bg-fingerboard-1), var(--bg-fingerboard-2), var(--bg-fingerboard-1));
+    background-blend-mode: multiply;
+    border-radius: 8px;
+    padding: 18px 0;
+    position: relative;
+    border: 2px solid #2a1a10;
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.5), 0 4px 20px rgba(0,0,0,0.3);
+  }
+  /* Wood grain texture */
+  .fingerboard::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    background-image:
+      repeating-linear-gradient(90deg, transparent 0, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 3px),
+      repeating-linear-gradient(180deg, transparent 0, transparent 8px, rgba(255,200,150,0.02) 8px, rgba(255,200,150,0.02) 9px);
+    border-radius: 6px;
+    pointer-events: none;
+  }
+  .string-row {
+    display: flex;
+    align-items: center;
+    height: 56px;
+    position: relative;
+    width: 100%;
+  }
+  .string-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--accent-gold);
+    text-align: center;
+    padding-right: 8px;
+    letter-spacing: 0.5px;
+    z-index: 5;
+    text-shadow: 0 0 8px rgba(0,0,0,0.6);
+    width: 56px;
+    flex-shrink: 0;
+  }
+  .fret-cell {
+    height: 100%;
+    position: relative;
+    border-right: 2px solid var(--fret-color);
+    box-shadow: inset 1px 0 0 rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .fret-cell.nut {
+    border-right: 4px solid #d4c5a0;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.4), inset 1px 0 0 rgba(255,255,255,0.1);
+  }
+  .fret-cell.fret-marker::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 230, 200, 0.18);
+    box-shadow: 0 0 4px rgba(255, 230, 200, 0.2);
+    pointer-events: none;
+  }
+  .fret-cell.fret-marker-double::before {
+    content: '';
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 230, 200, 0.18);
+    box-shadow:
+      0 -10px 0 rgba(255, 230, 200, 0.18),
+      0 10px 0 rgba(255, 230, 200, 0.18),
+      0 0 4px rgba(255, 230, 200, 0.2);
+    pointer-events: none;
+  }
+  /* String line */
+  .string-row::before {
+    content: '';
+    position: absolute;
+    left: 56px;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--string-color), #b8a888);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.3);
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  /* String thickness varies */
+  .string-row[data-string="0"]::before { height: 4px; }
+  .string-row[data-string="1"]::before { height: 3px; }
+  .string-row[data-string="2"]::before { height: 2.5px; }
+  .string-row[data-string="3"]::before { height: 2px; }
+
+  /* ===== NOTE DOTS ===== */
+  .note-dot {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--note-tone);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 3;
+    position: relative;
+    border: 2px solid rgba(255,255,255,0.15);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    user-select: none;
+  }
+  /* Smaller dots when many frets are visible */
+  .fingerboard-scroll[data-frets="17"] .note-dot { width: 34px; height: 34px; }
+  .fingerboard-scroll[data-frets="17"] .note-dot.root { width: 38px; height: 38px; }
+  .fingerboard-scroll[data-frets="17"] .note-dot .deg { font-size: 8px; }
+  .fingerboard-scroll[data-frets="17"] .note-dot .name { font-size: 11px; }
+
+  .fingerboard-scroll[data-frets="24"] .note-dot { width: 30px; height: 30px; }
+  .fingerboard-scroll[data-frets="24"] .note-dot.root { width: 34px; height: 34px; }
+  .fingerboard-scroll[data-frets="24"] .note-dot .deg { font-size: 7px; }
+  .fingerboard-scroll[data-frets="24"] .note-dot .name { font-size: 10px; }
+  .note-dot.root {
+    background: var(--note-root);
+    width: 42px;
+    height: 42px;
+    border-color: rgba(255,200,200,0.3);
+    box-shadow: 0 0 12px rgba(214, 56, 56, 0.4), 0 3px 8px rgba(0,0,0,0.5);
+  }
+  .note-dot.tone { background: var(--note-tone); }
+  .note-dot.semi { background: var(--note-semi); }
+  .note-dot.aug { background: var(--note-aug); }
+  .note-dot.arp-major { background: var(--note-arp-major); }
+  .note-dot.arp-minor { background: var(--note-arp-minor); }
+  .note-dot.arp-dim { background: var(--note-arp-dim); }
+  .note-dot.arp-aug { background: var(--note-arp-aug); }
+
+  .note-dot:hover {
+    transform: scale(1.12);
+    filter: brightness(1.2);
+    z-index: 10;
+  }
+  .note-dot.playing {
+    animation: pulse 0.6s ease-out;
+    z-index: 10;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 230, 100, 0.8); }
+    50% { transform: scale(1.25); box-shadow: 0 0 20px 8px rgba(255, 230, 100, 0.4); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 230, 100, 0); }
+  }
+  .note-dot .deg {
+    font-size: 9px;
+    line-height: 1;
+    opacity: 0.85;
+    margin-bottom: 1px;
+  }
+  .note-dot .name {
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 700;
+  }
+  .note-dot.open {
+    background: var(--note-root);
+    border: 3px solid var(--accent-gold);
+  }
+
+  /* Ghost notes — notes outside the current scale */
+  .note-dot.ghost {
+    background: rgba(180, 170, 150, 0.18);
+    color: rgba(232, 229, 220, 0.75);
+    border: 1.5px solid rgba(180, 170, 150, 0.3);
+    box-shadow: none;
+    width: 30px;
+    height: 30px;
+  }
+  .fingerboard-scroll[data-frets="17"] .note-dot.ghost { width: 26px; height: 26px; }
+  .fingerboard-scroll[data-frets="24"] .note-dot.ghost { width: 22px; height: 22px; }
+  .note-dot.ghost .deg { display: none; }
+  .note-dot.ghost .name {
+    font-size: 11px;
+    opacity: 1;
+    font-weight: 600;
+  }
+  .fingerboard-scroll[data-frets="17"] .note-dot.ghost .name { font-size: 10px; }
+  .fingerboard-scroll[data-frets="24"] .note-dot.ghost .name { font-size: 9px; }
+  .note-dot.ghost:hover {
+    background: rgba(180, 170, 150, 0.35);
+    color: rgba(255, 250, 240, 1);
+    transform: scale(1.15);
+    border-color: rgba(201, 164, 73, 0.5);
+  }
+
+  /* ===== TOOLTIP ===== */
+  .tooltip {
+    position: fixed;
+    background: rgba(20, 20, 25, 0.97);
+    border: 1px solid var(--accent-gold);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-primary);
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.15s;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    line-height: 1.6;
+  }
+  .tooltip.visible { opacity: 1; }
+  .tooltip strong { color: var(--accent-gold); }
+
+  /* ===== INFO PANEL ===== */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 768px) {
+    .info-grid { grid-template-columns: 1fr; }
+  }
+  .info-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 18px 22px;
+    box-shadow: var(--shadow-deep);
+  }
+  .info-card h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .scale-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+  .scale-name em { color: var(--accent-gold); font-style: italic; }
+  .formula-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .formula-display .step { padding: 0 4px; }
+  .formula-display .T { color: var(--note-tone); font-weight: 600; }
+  .formula-display .S { color: var(--note-semi); font-weight: 600; }
+  .formula-display .A { color: var(--note-aug); font-weight: 700; }
+  .formula-display .sep { color: var(--text-tertiary); margin: 0 2px; }
+  .notes-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .notes-display .root { color: var(--note-root); font-weight: 700; }
+  .notes-display .sep { color: var(--text-tertiary); margin: 0 4px; }
+
+  /* ===== LEGEND ===== */
+  .legend {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.15);
+  }
+
+  /* ===== INFO MODAL ===== */
+  .modal-overlay {
+    position: fixed;
+    top: 0; right: 0; bottom: 0; left: 0;
+    background: rgba(0,0,0,0.7);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: var(--bg-panel);
+    border: 1px solid var(--accent-gold);
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    position: relative;
+  }
+  .modal h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    color: var(--accent-gold);
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+  .modal h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-tertiary);
+    margin: 18px 0 8px;
+  }
+  .modal p {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .modal .close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    font-size: 24px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+  .modal .close:hover {
+    color: var(--accent-gold);
+    background: rgba(201, 164, 73, 0.1);
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-subtle);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-tertiary);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--bg-elevated);
+    border-radius: 5px;
+    border: 2px solid var(--bg-deep);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent-gold); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>String <em>Scale</em> Visualizer</h1>
+    <div class="subtitle">Violin · Viola · Cello · Double Bass</div>
+  </header>
+
+  <!-- CONTROLS -->
+  <section class="controls" aria-label="Pemilihan utama">
+    <div class="control-group">
+      <label for="instrument">Instrumen</label>
+      <select id="instrument" aria-label="Pilih instrumen">
+        <option value="violin">Violin · G3 D4 A4 E5</option>
+        <option value="viola">Viola · C3 G3 D4 A4</option>
+        <option value="cello">Cello · C2 G2 D3 A3</option>
+        <option value="bass">Double Bass · E1 A1 D2 G2</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label for="rootNote">Root Note</label>
+      <select id="rootNote" aria-label="Pilih root note"></select>
+    </div>
+    <div class="control-group">
+      <label for="scaleType">Scale / Arpeggio</label>
+      <select id="scaleType" aria-label="Pilih scale"></select>
+    </div>
+    <div class="control-group">
+      <label for="fretRange">Range Fret</label>
+      <select id="fretRange" aria-label="Pilih range fret">
+        <option value="7">Position 1 (0–7)</option>
+        <option value="12">Standard (0–12)</option>
+        <option value="17">Extended (0–17)</option>
+        <option value="24" selected>Full Range (0–24)</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- ACTION BAR -->
+  <div class="action-bar">
+    <button class="btn primary" id="playBtn" aria-label="Mainkan scale">▶ Play Scale</button>
+    <button class="btn danger" id="stopBtn" aria-label="Hentikan playback">■ Stop</button>
+    <select id="playDirection" class="btn" style="padding-right: 28px;">
+      <option value="asc">Ascending</option>
+      <option value="desc">Descending</option>
+      <option value="both">Both ↕</option>
+    </select>
+    <button class="btn" id="infoBtn" aria-label="Maklumat scale">ℹ Info</button>
+
+    <div class="bpm-control">
+      <label for="bpm">BPM</label>
+      <input type="range" id="bpm" min="40" max="200" value="90">
+      <span class="bpm-value" id="bpmValue">90</span>
+    </div>
+
+    <div class="toggle-row">
+      <label><input type="checkbox" id="useFlats"> Flats (♭)</label>
+      <label><input type="checkbox" id="showDegrees" checked> Degrees</label>
+      <label><input type="checkbox" id="showGhosts" checked> Ghost notes</label>
+      <label><input type="checkbox" id="soundOn" checked> Sound</label>
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:var(--note-root)"></span> Root</div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--note-tone)"></span> Tone step</div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--note-semi)"></span> Semitone</div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--note-aug)"></span> Aug 2nd (T½)</div>
+    <div class="legend-item">Klik bulatan → bunyi · ▶ untuk mainkan scale</div>
+  </div>
+
+  <!-- FINGERBOARD -->
+  <div class="fingerboard-wrapper">
+    <div class="fingerboard-scroll">
+      <div class="fret-numbers" id="fretNumbers"></div>
+      <div class="fingerboard" id="fingerboard"></div>
+    </div>
+  </div>
+
+  <!-- INFO -->
+  <div class="info-grid">
+    <div class="info-card">
+      <h3>Scale</h3>
+      <div class="scale-name" id="scaleNameFull">—</div>
+      <h3>Notes</h3>
+      <div class="notes-display" id="notesDisplay">—</div>
+    </div>
+    <div class="info-card">
+      <h3>Formula (intervals)</h3>
+      <div class="formula-display" id="formulaDisplay">—</div>
+      <h3 style="margin-top:14px">Step legend</h3>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
+        <span class="T" style="color:var(--note-tone); font-weight:600">T</span> = Tone (whole step) ·
+        <span class="S" style="color:var(--note-semi); font-weight:600">S</span> = Semitone (half) ·
+        <span class="A" style="color:var(--note-aug); font-weight:700">T½</span> = Augmented 2nd
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Pedagogi Muzik · Dibina untuk pengajaran string instrument · A. Aisamuddin · UPSI
+  </footer>
+</div>
+
+<!-- TOOLTIP -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- INFO MODAL -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <button class="close" id="closeModal" aria-label="Tutup">×</button>
+    <h2 id="modalTitle">Scale Info</h2>
+    <h3>Penerangan</h3>
+    <p id="modalDescription">—</p>
+    <h3>Mood / Karakter</h3>
+    <p id="modalMood">—</p>
+    <h3>Contoh Penggunaan</h3>
+    <p id="modalExamples">—</p>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   STRING SCALE VISUALIZER — CORE LOGIC
+   ============================================================ */
+
+// ---------- NOTE NAMES ----------
+const NOTES_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTES_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const LETTERS = ['C','D','E','F','G','A','B'];
+const LETTER_PC = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+
+// ---------- INSTRUMENT TUNING (MIDI numbers, low to high) ----------
+const INSTRUMENTS = {
+  violin: { name: 'Violin', tuning: [55, 62, 69, 76], names: ['G3','D4','A4','E5'] },
+  viola:  { name: 'Viola',  tuning: [48, 55, 62, 69], names: ['C3','G3','D4','A4'] },
+  cello:  { name: 'Cello',  tuning: [36, 43, 50, 57], names: ['C2','G2','D3','A3'] },
+  bass:   { name: 'Double Bass', tuning: [28, 33, 38, 43], names: ['E1','A1','D2','G2'] }
+};
+
+// ---------- SCALE DATABASE ----------
+const SCALES = {
+  // MAJOR
+  major: { name: 'Major (Ionian)', intervals: [0,2,4,5,7,9,11], category: 'Major' },
+  // MINOR
+  natural_minor: { name: 'Natural Minor (Aeolian)', intervals: [0,2,3,5,7,8,10], category: 'Minor' },
+  harmonic_minor: { name: 'Harmonic Minor', intervals: [0,2,3,5,7,8,11], category: 'Minor' },
+  melodic_minor_asc: { name: 'Melodic Minor (Ascending)', intervals: [0,2,3,5,7,9,11], category: 'Minor' },
+  melodic_minor_desc: { name: 'Melodic Minor (Descending)', intervals: [0,2,3,5,7,8,10], category: 'Minor' },
+  // PENTATONIC
+  major_pent: { name: 'Major Pentatonic', intervals: [0,2,4,7,9], category: 'Pentatonic' },
+  minor_pent: { name: 'Minor Pentatonic', intervals: [0,3,5,7,10], category: 'Pentatonic' },
+  // BLUES
+  blues: { name: 'Blues Scale', intervals: [0,3,5,6,7,10], category: 'Blues' },
+  extended_blues: { name: 'Extended Blues', intervals: [0,2,3,4,5,6,7,9,10], category: 'Blues' },
+  // MODES
+  dorian: { name: 'Dorian', intervals: [0,2,3,5,7,9,10], category: 'Modes' },
+  phrygian: { name: 'Phrygian', intervals: [0,1,3,5,7,8,10], category: 'Modes' },
+  lydian: { name: 'Lydian', intervals: [0,2,4,6,7,9,11], category: 'Modes' },
+  mixolydian: { name: 'Mixolydian', intervals: [0,2,4,5,7,9,10], category: 'Modes' },
+  locrian: { name: 'Locrian', intervals: [0,1,3,5,6,8,10], category: 'Modes' },
+  // JAZZ SPECIAL
+  lydian_dominant: { name: 'Lydian Dominant (Lydian b7)', intervals: [0,2,4,6,7,9,10], category: 'Jazz' },
+  altered: { name: 'Altered (Super Locrian)', intervals: [0,1,3,4,6,8,10], category: 'Jazz' },
+  whole_tone: { name: 'Whole Tone', intervals: [0,2,4,6,8,10], category: 'Jazz' },
+  diminished_hw: { name: 'Diminished (Half-Whole)', intervals: [0,1,3,4,6,7,9,10], category: 'Jazz' },
+  diminished_wh: { name: 'Diminished (Whole-Half)', intervals: [0,2,3,5,6,8,9,11], category: 'Jazz' },
+  // BEBOP
+  bebop_major: { name: 'Bebop Major', intervals: [0,2,4,5,7,8,9,11], category: 'Bebop' },
+  bebop_dominant: { name: 'Bebop Dominant', intervals: [0,2,4,5,7,9,10,11], category: 'Bebop' },
+  bebop_dorian: { name: 'Bebop Dorian', intervals: [0,2,3,4,5,7,9,10], category: 'Bebop' },
+  bebop_melodic_minor: { name: 'Bebop Melodic Minor', intervals: [0,2,3,5,7,8,9,11], category: 'Bebop' },
+  // MELODIC MINOR MODES
+  lydian_aug: { name: 'Lydian Augmented', intervals: [0,2,4,6,8,9,11], category: 'Mel.Min Modes' },
+  acoustic: { name: 'Acoustic (Overtone)', intervals: [0,2,4,6,7,9,10], category: 'Mel.Min Modes' },
+  locrian_sharp2: { name: 'Locrian #2 (Half-Diminished)', intervals: [0,2,3,5,6,8,10], category: 'Mel.Min Modes' },
+  super_locrian: { name: 'Super Locrian (Altered)', intervals: [0,1,3,4,6,8,10], category: 'Mel.Min Modes' },
+  // EXOTIC
+  chromatic: { name: 'Chromatic', intervals: [0,1,2,3,4,5,6,7,8,9,10,11], category: 'Exotic' },
+  octatonic: { name: 'Octatonic (Diminished)', intervals: [0,2,3,5,6,8,9,11], category: 'Exotic' },
+  hungarian_minor: { name: 'Hungarian Minor', intervals: [0,2,3,6,7,8,11], category: 'Exotic' },
+  spanish_phrygian: { name: 'Spanish Phrygian (Freygish)', intervals: [0,1,4,5,7,8,10], category: 'Exotic' },
+  neapolitan_major: { name: 'Neapolitan Major', intervals: [0,1,3,5,7,9,11], category: 'Exotic' },
+  neapolitan_minor: { name: 'Neapolitan Minor', intervals: [0,1,3,5,7,8,11], category: 'Exotic' },
+  // ARPEGGIOS
+  arp_major: { name: 'Major Triad', intervals: [0,4,7], category: 'Arpeggios', arp:'major' },
+  arp_minor: { name: 'Minor Triad', intervals: [0,3,7], category: 'Arpeggios', arp:'minor' },
+  arp_aug: { name: 'Augmented Triad', intervals: [0,4,8], category: 'Arpeggios', arp:'aug' },
+  arp_dim: { name: 'Diminished Triad', intervals: [0,3,6], category: 'Arpeggios', arp:'dim' },
+  arp_maj7: { name: 'Major 7th (Maj7)', intervals: [0,4,7,11], category: 'Arpeggios', arp:'major' },
+  arp_dom7: { name: 'Dominant 7th (7)', intervals: [0,4,7,10], category: 'Arpeggios', arp:'major' },
+  arp_min7: { name: 'Minor 7th (m7)', intervals: [0,3,7,10], category: 'Arpeggios', arp:'minor' },
+  arp_minmaj7: { name: 'Minor Major 7th (mMaj7)', intervals: [0,3,7,11], category: 'Arpeggios', arp:'minor' },
+  arp_halfdim: { name: 'Half-Diminished (ø7)', intervals: [0,3,6,10], category: 'Arpeggios', arp:'dim' },
+  arp_dim7: { name: 'Diminished 7th (°7)', intervals: [0,3,6,9], category: 'Arpeggios', arp:'dim' },
+  arp_maj9: { name: 'Major 9th', intervals: [0,4,7,11,14], category: 'Arpeggios', arp:'major' },
+  arp_min9: { name: 'Minor 9th', intervals: [0,3,7,10,14], category: 'Arpeggios', arp:'minor' },
+  arp_dom9: { name: 'Dominant 9th', intervals: [0,4,7,10,14], category: 'Arpeggios', arp:'major' },
+  arp_dom7b9: { name: 'Dominant 7♭9', intervals: [0,4,7,10,13], category: 'Arpeggios', arp:'major' }
+};
+
+// ---------- SCALE INFO (theoretical knowledge) ----------
+const SCALE_INFO = {
+  major: { desc: 'Skala paling asas dalam muzik Barat. Bunyi terang, gembira, stabil.', mood: 'Gembira, terang, optimis, stabil', examples: 'Twinkle Twinkle Little Star · Joy to the World · kebanyakan lagu pop & klasik' },
+  natural_minor: { desc: 'Skala minor asas yang dibina dari nada ke-6 skala major. Bunyi sedih atau melankolik.', mood: 'Sedih, melankolik, serius', examples: 'Greensleeves · House of the Rising Sun · banyak lagu folk' },
+  harmonic_minor: { desc: 'Skala minor dengan nada ke-7 dinaikkan, mencipta interval augmented 2nd antara degree 6 dan 7.', mood: 'Dramatik, eksotik, Timur Tengah, klasik', examples: 'Paganini Caprice No.24 · banyak muzik flamenco · Hava Nagila' },
+  melodic_minor_asc: { desc: 'Skala minor dengan degree 6 dan 7 dinaikkan secara naik. Klasik untuk bunyi yang lebih lembut daripada harmonic minor.', mood: 'Lembut, smooth, sophisticated', examples: 'Bach · banyak jazz standards · Gymnopédie No.1' },
+  melodic_minor_desc: { desc: 'Versi turun melodic minor — sama dengan natural minor.', mood: 'Sedih, alami', examples: 'Tradisi klasik' },
+  major_pent: { desc: 'Skala 5 nota tanpa semitone. Tiada nota disonan, sentiasa konsonan.', mood: 'Bersih, terang, universal', examples: 'Amazing Grace · muzik tradisional Cina/Jepun · banyak folk' },
+  minor_pent: { desc: 'Skala 5 nota minor — paling popular dalam rock, blues, dan pop.', mood: 'Cool, rock, soulful', examples: 'My Girl · banyak rock solos · blues guitar' },
+  blues: { desc: 'Minor pentatonic dengan tambahan "blue note" (♭5).', mood: 'Bluesy, soulful, gritty', examples: 'Sweet Home Chicago · BB King solos · klasik blues' },
+  extended_blues: { desc: 'Blues scale dengan major dan minor third — fleksibel untuk improvisasi.', mood: 'Jazz-blues, bluesy modern', examples: 'Jazz-blues fusion · improvisasi moden' },
+  dorian: { desc: 'Mode minor dengan major 6th. Bunyi minor yang tidak terlalu sedih.', mood: 'Cool, jazzy, sedikit terang', examples: 'So What (Miles Davis) · Scarborough Fair · banyak modal jazz' },
+  phrygian: { desc: 'Mode minor dengan flat 2nd. Bunyi pekat dan eksotik.', mood: 'Spanish, eksotik, gelap', examples: 'Flamenco · banyak metal · muzik Sepanyol' },
+  lydian: { desc: 'Mode major dengan raised 4th (#4). Bunyi terang dan "melayang".', mood: 'Mistik, dreamy, cinematic', examples: 'The Simpsons theme · banyak film score · Joe Satriani' },
+  mixolydian: { desc: 'Mode major dengan flat 7th. Mode dominant.', mood: 'Bluesy, rock, folk', examples: 'Norwegian Wood · banyak Celtic · rock klasik' },
+  locrian: { desc: 'Mode paling jarang — half-diminished. Tidak stabil, bunyi tegang.', mood: 'Tegang, tidak stabil, eksperimental', examples: 'Sangat jarang · beberapa metal moden · improvisasi avant-garde' },
+  lydian_dominant: { desc: 'Lydian dengan flat 7th. Mode dominant yang exotic.', mood: 'Jazz fusion, modern', examples: 'Jazz fusion · film score · Frank Zappa' },
+  altered: { desc: 'Skala untuk dominant 7 chord dengan semua altered tensions (b9, #9, #11, b13).', mood: 'Tegang, jazz, sophisticated', examples: 'Jazz bebop · Coltrane · modern jazz' },
+  whole_tone: { desc: 'Skala 6 nota dengan semua interval whole-tone. Tiada tarikan tonal.', mood: 'Dreamy, impressionist, magical', examples: 'Debussy · Stevie Wonder "You Are the Sunshine of My Life"' },
+  diminished_hw: { desc: 'Skala 8 nota berseling half-whole. Untuk dominant 7 chord.', mood: 'Tegang, jazz', examples: 'Jazz bebop · improvisasi atas dominant' },
+  diminished_wh: { desc: 'Skala 8 nota berseling whole-half. Untuk diminished chord.', mood: 'Mysterious, jazz', examples: 'Jazz · Stravinsky · Rimsky-Korsakov' },
+  bebop_major: { desc: 'Major scale dengan tambahan passing note (#5/b6).', mood: 'Bebop jazz, swing', examples: 'Charlie Parker · bebop standards' },
+  bebop_dominant: { desc: 'Mixolydian dengan major 7 sebagai passing note.', mood: 'Bebop, swing', examples: 'Bebop jazz · Charlie Parker' },
+  bebop_dorian: { desc: 'Dorian dengan major 3 sebagai passing note.', mood: 'Bebop, modal jazz', examples: 'Bebop · jazz standards' },
+  bebop_melodic_minor: { desc: 'Melodic minor dengan #5 sebagai passing note.', mood: 'Modern jazz', examples: 'Modern jazz · post-bop' },
+  lydian_aug: { desc: 'Mode ke-3 melodic minor — Lydian dengan #5.', mood: 'Mystical, ethereal', examples: 'Modern jazz · film score' },
+  acoustic: { desc: 'Mode ke-4 melodic minor — sama dengan Lydian Dominant.', mood: 'Bright, jazz fusion', examples: 'Bartók · jazz fusion' },
+  locrian_sharp2: { desc: 'Locrian dengan natural 2nd. Mode untuk half-diminished chord.', mood: 'Half-diminished, jazz', examples: 'Jazz minor key ii-V-i' },
+  super_locrian: { desc: 'Mode ke-7 melodic minor — sama dengan altered scale.', mood: 'Tegang, jazz', examples: 'Jazz · improvisasi atas altered dominant' },
+  chromatic: { desc: 'Semua 12 nota — semitone berturut.', mood: 'Tegang, modern, atonal', examples: 'Bach Chromatic Fantasy · Schoenberg · banyak passages' },
+  octatonic: { desc: 'Skala 8 nota — sinonim dengan diminished WH.', mood: 'Mysterious, modern', examples: 'Stravinsky · Messiaen' },
+  hungarian_minor: { desc: 'Harmonic minor dengan raised 4th. Dua interval augmented 2nd.', mood: 'Sangat eksotik, gypsy, Hungarian', examples: 'Liszt Hungarian Rhapsodies · muzik gypsy' },
+  spanish_phrygian: { desc: 'Phrygian dengan major 3rd — bunyi flamenco klasik.', mood: 'Sepanyol, flamenco, eksotik', examples: 'Flamenco tradisional · Concierto de Aranjuez · banyak muzik Sepanyol' },
+  neapolitan_major: { desc: 'Skala dengan flat 2nd dan major triad atas tonic.', mood: 'Klasik, romantic', examples: 'Beethoven · Chopin · jarang dalam moden' },
+  neapolitan_minor: { desc: 'Harmonic minor dengan flat 2nd.', mood: 'Eksotik, dramatik', examples: 'Verdi · Liszt · klasik romantic' },
+  arp_major: { desc: 'Tiga nota: root, major 3rd, perfect 5th.', mood: 'Stabil, terang', examples: 'Asas semua harmoni major' },
+  arp_minor: { desc: 'Tiga nota: root, minor 3rd, perfect 5th.', mood: 'Sedih, lembut', examples: 'Asas semua harmoni minor' },
+  arp_aug: { desc: 'Tiga nota dengan dua major 3rds.', mood: 'Tegang, melayang', examples: 'Augmented 7 chords · jazz' },
+  arp_dim: { desc: 'Tiga nota dengan dua minor 3rds.', mood: 'Tegang, gelap', examples: 'Tense passages · klasik' },
+  arp_maj7: { desc: 'Major triad + major 7th.', mood: 'Jazz, smooth, sophisticated', examples: 'Jazz · bossa nova · ballads' },
+  arp_dom7: { desc: 'Major triad + minor 7th. Chord dominant.', mood: 'Bluesy, ingin selesai', examples: 'Blues · jazz · semua muzik tonal' },
+  arp_min7: { desc: 'Minor triad + minor 7th.', mood: 'Mellow, jazz', examples: 'Jazz · neo-soul · ii chord dalam major' },
+  arp_minmaj7: { desc: 'Minor triad + major 7th — bunyi tegang dan filmic.', mood: 'Cinematic, mysterious', examples: 'James Bond theme · film noir · jazz minor' },
+  arp_halfdim: { desc: 'Diminished triad + minor 7th. ii chord dalam minor key.', mood: 'Jazz, half-diminished', examples: 'Minor ii-V-i progressions' },
+  arp_dim7: { desc: 'Diminished triad + diminished 7th — semua minor 3rds.', mood: 'Sangat tegang, dramatik', examples: 'Klasik passages · transitions · horror film' },
+  arp_maj9: { desc: 'Maj7 + 9th.', mood: 'Lush, jazz, sophisticated', examples: 'Jazz · bossa nova · soul' },
+  arp_min9: { desc: 'm7 + 9th.', mood: 'Lush minor, neo-soul', examples: 'Jazz · R&B · neo-soul' },
+  arp_dom9: { desc: 'Dom7 + 9th.', mood: 'Funky, soulful', examples: 'Funk · soul · jazz' },
+  arp_dom7b9: { desc: 'Dom7 + flat 9th. Tegang, untuk altered dominant.', mood: 'Sangat tegang, jazz', examples: 'Jazz · resolusi ke minor' }
+};
+
+// ============================================================
+//   SCALE SPELLING — proper enharmonic naming
+// ============================================================
+function spellScale(rootPc, intervals, useFlats=false) {
+  const result = [];
+  const useLetterSpelling = intervals.length === 7;
+  const fallbackNames = useFlats ? NOTES_FLAT : NOTES_SHARP;
+
+  if (useLetterSpelling) {
+    const rootName = fallbackNames[rootPc];
+    const rootLetter = rootName[0];
+    const rootLetterIdx = LETTERS.indexOf(rootLetter);
+
+    for (let i = 0; i < intervals.length; i++) {
+      const targetPc = (rootPc + intervals[i]) % 12;
+      const expectedLetter = LETTERS[(rootLetterIdx + i) % 7];
+      const expectedLetterPc = LETTER_PC[expectedLetter];
+
+      let diff = ((targetPc - expectedLetterPc) % 12 + 12) % 12;
+      if (diff > 6) diff -= 12;
+
+      let accidental = '';
+      if (diff === 1) accidental = '#';
+      else if (diff === 2) accidental = '##';
+      else if (diff === -1) accidental = 'b';
+      else if (diff === -2) accidental = 'bb';
+      else if (diff !== 0) {
+        // Fallback to chromatic
+        return intervals.map(iv => fallbackNames[(rootPc + iv) % 12]);
+      }
+      result.push(expectedLetter + accidental);
+    }
+    return result;
+  }
+
+  return intervals.map(iv => fallbackNames[(rootPc + iv) % 12]);
+}
+
+// Convert spelled note name to pitch class
+function noteToPc(noteName) {
+  if (!noteName) return 0;
+  const letter = noteName[0];
+  let pc = LETTER_PC[letter];
+  for (let i = 1; i < noteName.length; i++) {
+    if (noteName[i] === '#') pc++;
+    else if (noteName[i] === 'b') pc--;
+  }
+  return ((pc % 12) + 12) % 12;
+}
+
+// MIDI to frequency
+function midiToFreq(midi) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+// Format MIDI to note name
+function midiToName(midi, useFlats=false) {
+  const pc = ((midi % 12) + 12) % 12;
+  const oct = Math.floor(midi / 12) - 1;
+  return (useFlats ? NOTES_FLAT[pc] : NOTES_SHARP[pc]) + oct;
+}
+
+// Compute formula symbols (T, S, T½)
+function computeFormula(intervals) {
+  const steps = [];
+  for (let i = 1; i < intervals.length; i++) {
+    const d = intervals[i] - intervals[i-1];
+    if (d === 1) steps.push('S');
+    else if (d === 2) steps.push('T');
+    else if (d === 3) steps.push('T½');
+    else steps.push(d + '');
+  }
+  return steps;
+}
+
+// ============================================================
+//   AUDIO ENGINE — Web Audio API string synthesis
+// ============================================================
+class StringAudio {
+  constructor() {
+    this.ctx = null;
+    this.master = null;
+    this.activeNotes = [];
+  }
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 0.4;
+    this.master.connect(this.ctx.destination);
+  }
+  ensureRunning() {
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  }
+  // Play a string-like note with sawtooth + filter + ADSR
+  playNote(freq, duration=0.6, instrument='violin') {
+    if (!this.ctx) this.init();
+    this.ensureRunning();
+    const t0 = this.ctx.currentTime;
+
+    // Profile per instrument
+    const profile = {
+      violin: { filterFreq: 2800, filterQ: 2, attack: 0.04, decay: 0.15, sustain: 0.7, vibratoRate: 5.5, vibratoDepth: 4 },
+      viola:  { filterFreq: 2200, filterQ: 1.8, attack: 0.05, decay: 0.18, sustain: 0.7, vibratoRate: 5, vibratoDepth: 3 },
+      cello:  { filterFreq: 1600, filterQ: 1.5, attack: 0.06, decay: 0.2, sustain: 0.75, vibratoRate: 4.5, vibratoDepth: 2.5 },
+      bass:   { filterFreq: 900, filterQ: 1.2, attack: 0.08, decay: 0.25, sustain: 0.8, vibratoRate: 4, vibratoDepth: 2 }
+    }[instrument] || { filterFreq: 2800, filterQ: 2, attack: 0.04, decay: 0.15, sustain: 0.7, vibratoRate: 5.5, vibratoDepth: 4 };
+
+    // Two oscillators: sawtooth + slight detune for richness
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc2.type = 'sawtooth';
+    osc1.frequency.value = freq;
+    osc2.frequency.value = freq * 1.005; // slight detune
+
+    // Vibrato LFO
+    const lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain();
+    lfo.frequency.value = profile.vibratoRate;
+    lfoGain.gain.value = profile.vibratoDepth;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    lfoGain.connect(osc2.frequency);
+
+    // Filter
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = Math.min(profile.filterFreq, freq * 6);
+    filter.Q.value = profile.filterQ;
+
+    // Envelope
+    const env = this.ctx.createGain();
+    env.gain.setValueAtTime(0, t0);
+    env.gain.linearRampToValueAtTime(0.5, t0 + profile.attack);
+    env.gain.linearRampToValueAtTime(profile.sustain * 0.4, t0 + profile.attack + profile.decay);
+    env.gain.setValueAtTime(profile.sustain * 0.4, t0 + duration - 0.1);
+    env.gain.linearRampToValueAtTime(0, t0 + duration);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(env);
+    env.connect(this.master);
+
+    // Vibrato delay (more natural — start a moment after onset)
+    lfoGain.gain.setValueAtTime(0, t0);
+    lfoGain.gain.linearRampToValueAtTime(profile.vibratoDepth, t0 + 0.15);
+
+    osc1.start(t0);
+    osc2.start(t0);
+    lfo.start(t0);
+    osc1.stop(t0 + duration + 0.05);
+    osc2.stop(t0 + duration + 0.05);
+    lfo.stop(t0 + duration + 0.05);
+
+    const noteRef = { osc1, osc2, lfo, env };
+    this.activeNotes.push(noteRef);
+    setTimeout(() => {
+      const idx = this.activeNotes.indexOf(noteRef);
+      if (idx >= 0) this.activeNotes.splice(idx, 1);
+    }, (duration + 0.1) * 1000);
+  }
+  stopAll() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    for (const n of this.activeNotes) {
+      try {
+        n.env.gain.cancelScheduledValues(t);
+        n.env.gain.setValueAtTime(n.env.gain.value, t);
+        n.env.gain.linearRampToValueAtTime(0, t + 0.05);
+      } catch(e){}
+    }
+    this.activeNotes = [];
+  }
+}
+
+const audio = new StringAudio();
+
+// ============================================================
+//   STATE
+// ============================================================
+const state = {
+  instrument: 'violin',
+  rootPc: 0,
+  scaleKey: 'major',
+  fretRange: 24,
+  useFlats: false,
+  showDegrees: true,
+  showGhosts: true,
+  soundOn: true,
+  bpm: 90,
+  playing: false,
+  playTimers: []
+};
+
+// ============================================================
+//   UI POPULATION
+// ============================================================
+function populateRootSelect() {
+  const sel = document.getElementById('rootNote');
+  sel.innerHTML = '';
+  const names = state.useFlats ? NOTES_FLAT : NOTES_SHARP;
+  names.forEach((n, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = n;
+    sel.appendChild(opt);
+  });
+  sel.value = state.rootPc;
+}
+
+function populateScaleSelect() {
+  const sel = document.getElementById('scaleType');
+  sel.innerHTML = '';
+  const groups = {};
+  for (const [k, s] of Object.entries(SCALES)) {
+    if (!groups[s.category]) groups[s.category] = [];
+    groups[s.category].push({ key: k, ...s });
+  }
+  for (const [cat, items] of Object.entries(groups)) {
+    const og = document.createElement('optgroup');
+    og.label = cat;
+    items.forEach(it => {
+      const opt = document.createElement('option');
+      opt.value = it.key;
+      opt.textContent = it.name;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  }
+  sel.value = state.scaleKey;
+}
+
+// ============================================================
+//   COMPUTE CURRENT SCALE NOTES
+// ============================================================
+function getCurrentScaleNotes() {
+  const scale = SCALES[state.scaleKey];
+  const intervals = scale.intervals;
+  const spelled = spellScale(state.rootPc, intervals, state.useFlats);
+  const pcs = intervals.map(iv => (state.rootPc + iv) % 12);
+  // Build degree labels (1, 2, b3, etc.)
+  const degrees = computeDegrees(intervals);
+  return { scale, intervals, spelled, pcs, degrees };
+}
+
+function computeDegrees(intervals) {
+  // Map semitones from root to scale degree string
+  const map = {
+    0: '1', 1: '♭2', 2: '2', 3: '♭3', 4: '3', 5: '4',
+    6: '♭5', 7: '5', 8: '♭6', 9: '6', 10: '♭7', 11: '7',
+    13: '♭9', 14: '9'
+  };
+  return intervals.map(iv => {
+    if (map[iv]) return map[iv];
+    // For Lydian #4 / Hungarian #4, intervals[3] === 6 → could be #4
+    return iv.toString();
+  });
+}
+
+// Better degree computation: use letter-based logic when possible
+function computeDegreesSmart(intervals) {
+  // For 7-note scales with letter spelling, derive from intervals
+  // Default mapping covers most cases; tweak for specific scales below
+  const baseMap = {
+    0: '1', 1: '♭2', 2: '2', 3: '♭3', 4: '3', 5: '4',
+    6: '♭5', 7: '5', 8: '♭6', 9: '6', 10: '♭7', 11: '7',
+    12: '8', 13: '♭9', 14: '9'
+  };
+  // For Lydian, 6 should be #4 not b5
+  // Detect: if the scale has both 6 and 7, 6 is #4
+  // Simpler: rely on spelling. If iv === 6 and there's a 7 in intervals → #4
+  const has7 = intervals.includes(7);
+  const has5 = intervals.includes(5);
+  return intervals.map(iv => {
+    if (iv === 6 && has7 && !has5) return '#4';
+    if (iv === 6 && has7 && has5) return '♭5';
+    if (iv === 8 && intervals.includes(7)) return '♭6';
+    if (iv === 8 && !intervals.includes(7)) return '#5';
+    return baseMap[iv] || iv.toString();
+  });
+}
+
+// ============================================================
+//   BUILD FINGERBOARD
+// ============================================================
+function buildFingerboard() {
+  const inst = INSTRUMENTS[state.instrument];
+  const fretCount = state.fretRange;
+  const tuning = inst.tuning;
+  const stringNames = inst.names;
+
+  const fb = document.getElementById('fingerboard');
+  fb.innerHTML = '';
+
+  // Set data attribute on scroll container for CSS density rules
+  const scrollEl = fb.parentElement;
+  let densityKey = '12';
+  if (fretCount >= 24) densityKey = '24';
+  else if (fretCount >= 17) densityKey = '17';
+  scrollEl.setAttribute('data-frets', densityKey);
+
+  // Strings are displayed high → low (top to bottom)
+  // tuning array: low to high, so reverse for display
+  const stringsForDisplay = [...tuning].reverse();
+  const namesForDisplay = [...stringNames].reverse();
+
+  const { spelled, pcs, degrees, intervals } = getCurrentScaleNotes();
+  const arpType = SCALES[state.scaleKey].arp;
+
+  stringsForDisplay.forEach((openMidi, displayIdx) => {
+    const stringRow = document.createElement('div');
+    stringRow.className = 'string-row';
+    stringRow.dataset.string = displayIdx;
+
+    // String label cell
+    const labelCell = document.createElement('div');
+    labelCell.className = 'string-label';
+    labelCell.textContent = namesForDisplay[displayIdx];
+    stringRow.appendChild(labelCell);
+
+    // Fret cells (0 = open string, 1..N = frets)
+    for (let fret = 0; fret < fretCount; fret++) {
+      const cell = document.createElement('div');
+      cell.className = 'fret-cell';
+      if (fret === 0) cell.classList.add('nut');
+      // Fret markers at standard positions, double dots at 12 and 24
+      if ([3,5,7,9,15,17,19,21].includes(fret)) cell.classList.add('fret-marker');
+      if ([12, 24].includes(fret)) cell.classList.add('fret-marker-double');
+
+      // The note at this fret = openMidi + fret
+      const midi = openMidi + fret;
+      const pc = ((midi % 12) + 12) % 12;
+
+      // Is this pc in the current scale?
+      const scaleIdx = pcs.indexOf(pc);
+      if (scaleIdx >= 0) {
+        const dot = document.createElement('div');
+        dot.className = 'note-dot';
+
+        // Color by role
+        if (scaleIdx === 0) {
+          dot.classList.add('root');
+          if (fret === 0) dot.classList.add('open');
+        } else if (arpType) {
+          // Arpeggio: use arp colors
+          dot.classList.add('arp-' + arpType);
+        } else {
+          // Determine T / S / A based on prev-to-current interval in the SCALE order
+          // Use the gap from previous degree (in semitones) to color
+          const prevIv = intervals[scaleIdx - 1] !== undefined ? intervals[scaleIdx - 1] : 0;
+          const thisIv = intervals[scaleIdx];
+          const gap = thisIv - prevIv;
+          if (gap === 1) dot.classList.add('semi');
+          else if (gap === 3) dot.classList.add('aug');
+          else dot.classList.add('tone');
+        }
+
+        const degreeEl = document.createElement('span');
+        degreeEl.className = 'deg';
+        degreeEl.textContent = degrees[scaleIdx];
+
+        // Build display name: for accidentals show both spellings (e.g. G#/Ab)
+        // The scale-spelled note keeps its primary name first, then alternate enharmonic
+        const primaryName = spelled[scaleIdx];
+        const sharpAlt = NOTES_SHARP[pc];
+        const flatAlt = NOTES_FLAT[pc];
+        let displayName;
+        if (sharpAlt === flatAlt) {
+          // Natural note — single letter (C, D, E, F, G, A, B)
+          displayName = primaryName;
+        } else {
+          // Has accidental — show primary scale-spelled name + the OTHER enharmonic
+          // If primary is already one of the standard sharp/flat forms, show the other one
+          let alt;
+          if (primaryName === sharpAlt) alt = flatAlt;
+          else if (primaryName === flatAlt) alt = sharpAlt;
+          else {
+            // Primary uses unusual spelling (e.g. E#, Bb, Cb, Fb, ##/bb).
+            // Show both standard alternatives.
+            alt = sharpAlt + '/' + flatAlt;
+          }
+          displayName = primaryName + '/' + alt;
+        }
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'name';
+        nameEl.textContent = displayName;
+
+        if (state.showDegrees) dot.appendChild(degreeEl);
+        dot.appendChild(nameEl);
+
+        // Tooltip data
+        dot.dataset.midi = midi;
+        dot.dataset.note = spelled[scaleIdx];
+        dot.dataset.degree = degrees[scaleIdx];
+        dot.dataset.fret = fret;
+        dot.dataset.string = namesForDisplay[displayIdx];
+
+        // Click → play
+        dot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          playSingleNote(midi, dot);
+        });
+        // Tooltip
+        dot.addEventListener('mouseenter', (e) => showTooltip(dot, e));
+        dot.addEventListener('mouseleave', hideTooltip);
+        dot.addEventListener('mousemove', (e) => moveTooltip(e));
+
+        cell.appendChild(dot);
+      } else if (state.showGhosts) {
+        // GHOST NOTE — note exists at this position but isn't in the scale
+        const dot = document.createElement('div');
+        dot.className = 'note-dot ghost';
+
+        // Show both enharmonic spellings for accidentals (e.g. "G#/Ab")
+        const sharpName = NOTES_SHARP[pc];
+        const flatName = NOTES_FLAT[pc];
+        const ghostName = (sharpName !== flatName)
+          ? `${sharpName}/${flatName}`
+          : sharpName;
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'name';
+        nameEl.textContent = ghostName;
+        dot.appendChild(nameEl);
+
+        // Tooltip data — mark as not-in-scale
+        dot.dataset.midi = midi;
+        dot.dataset.note = ghostName;
+        dot.dataset.degree = '—';
+        dot.dataset.fret = fret;
+        dot.dataset.string = namesForDisplay[displayIdx];
+        dot.dataset.ghost = '1';
+
+        dot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          playSingleNote(midi, dot);
+        });
+        dot.addEventListener('mouseenter', (e) => showTooltip(dot, e));
+        dot.addEventListener('mouseleave', hideTooltip);
+        dot.addEventListener('mousemove', (e) => moveTooltip(e));
+
+        cell.appendChild(dot);
+      }
+
+      stringRow.appendChild(cell);
+    }
+
+    fb.appendChild(stringRow);
+  });
+
+  // Build fret numbers
+  const fnDiv = document.getElementById('fretNumbers');
+  fnDiv.innerHTML = '';
+  for (let f = 0; f < fretCount; f++) {
+    const span = document.createElement('span');
+    span.textContent = f;
+    fnDiv.appendChild(span);
+  }
+}
+
+// ============================================================
+//   TOOLTIP
+// ============================================================
+const tooltip = document.getElementById('tooltip');
+function showTooltip(dot, e) {
+  const note = dot.dataset.note;
+  const degree = dot.dataset.degree;
+  const fret = dot.dataset.fret;
+  const string = dot.dataset.string;
+  const midi = parseInt(dot.dataset.midi);
+  const isGhost = dot.dataset.ghost === '1';
+  const intervalNames = ['Unison','Minor 2nd','Major 2nd','Minor 3rd','Major 3rd','Perfect 4th','Tritone','Perfect 5th','Minor 6th','Major 6th','Minor 7th','Major 7th'];
+  const ivFromRoot = ((midi % 12 - state.rootPc) % 12 + 12) % 12;
+
+  if (isGhost) {
+    tooltip.innerHTML = `<strong>${note}${Math.floor(midi/12 - 1)}</strong> · <em style="color:var(--text-tertiary)">tidak dalam scale</em><br>
+      Fret ${fret} on <strong>${string}</strong> string<br>
+      Interval dari root: ${intervalNames[ivFromRoot]}`;
+  } else {
+    tooltip.innerHTML = `<strong>${note}${Math.floor(midi/12 - 1)}</strong> · scale degree <strong>${degree}</strong><br>
+      Fret ${fret} on <strong>${string}</strong> string<br>
+      Interval: ${intervalNames[ivFromRoot]}`;
+  }
+  tooltip.classList.add('visible');
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  const rect = tooltip.getBoundingClientRect();
+  let x = e.clientX + 14;
+  let y = e.clientY - rect.height - 10;
+  if (x + rect.width > window.innerWidth - 8) x = window.innerWidth - rect.width - 8;
+  if (y < 8) y = e.clientY + 14;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = y + 'px';
+}
+function hideTooltip() {
+  tooltip.classList.remove('visible');
+}
+
+// ============================================================
+//   INFO PANEL UPDATE
+// ============================================================
+function updateInfoPanel() {
+  const { scale, intervals, spelled, degrees } = getCurrentScaleNotes();
+  const rootName = (state.useFlats ? NOTES_FLAT : NOTES_SHARP)[state.rootPc];
+
+  document.getElementById('scaleNameFull').innerHTML =
+    `<em>${rootName}</em> ${scale.name}`;
+
+  // Notes display with octave wrap
+  const notesHtml = spelled.map((n, i) =>
+    `<span class="${i === 0 ? 'root' : ''}">${n}</span>`
+  ).join('<span class="sep">·</span>') +
+  '<span class="sep">·</span>' +
+  `<span class="root">${spelled[0]}</span>`;
+  document.getElementById('notesDisplay').innerHTML = notesHtml;
+
+  // Formula
+  const steps = computeFormula([...intervals, intervals[intervals.length-1] + (12 - intervals[intervals.length-1] % 12)]);
+  // Better: compute including wrap to octave
+  const formulaSteps = [];
+  for (let i = 1; i < intervals.length; i++) {
+    formulaSteps.push(intervals[i] - intervals[i-1]);
+  }
+  formulaSteps.push(12 - intervals[intervals.length - 1]);
+
+  const formulaHtml = formulaSteps.map(d => {
+    if (d === 1) return `<span class="step S">S</span>`;
+    if (d === 2) return `<span class="step T">T</span>`;
+    if (d === 3) return `<span class="step A">T½</span>`;
+    return `<span class="step">${d}</span>`;
+  }).join('<span class="sep">–</span>');
+  document.getElementById('formulaDisplay').innerHTML = formulaHtml;
+}
+
+// ============================================================
+//   PLAY SINGLE NOTE
+// ============================================================
+function playSingleNote(midi, dotEl) {
+  if (!state.soundOn) return;
+  const freq = midiToFreq(midi);
+  audio.playNote(freq, 0.7, state.instrument);
+  if (dotEl) {
+    dotEl.classList.remove('playing');
+    void dotEl.offsetWidth; // restart animation
+    dotEl.classList.add('playing');
+    setTimeout(() => dotEl.classList.remove('playing'), 600);
+  }
+}
+
+// ============================================================
+//   PLAY SCALE
+// ============================================================
+function findFirstFingerboardPosition(targetPc, targetMidi) {
+  // Find the lowest fret on each string where this MIDI appears
+  // Returns the dot element for highlighting
+  const dots = document.querySelectorAll('.note-dot');
+  for (const dot of dots) {
+    if (parseInt(dot.dataset.midi) === targetMidi) return dot;
+  }
+  return null;
+}
+
+async function playScale() {
+  if (state.playing) return;
+  state.playing = true;
+  document.getElementById('playBtn').disabled = true;
+  audio.init();
+  audio.ensureRunning();
+
+  const { intervals } = getCurrentScaleNotes();
+  const direction = document.getElementById('playDirection').value;
+
+  const tuning = INSTRUMENTS[state.instrument].tuning;
+  // Find a comfortable starting MIDI: lowest tuning + offset to root
+  // Pick the lowest MIDI ≥ tuning[0] that matches root pc
+  const lowestMidi = tuning[0];
+  let startMidi = lowestMidi;
+  while (startMidi % 12 !== state.rootPc) startMidi++;
+  // If start is too high above instrument range, drop an octave
+  if (startMidi > tuning[3] + 4) startMidi -= 12;
+
+  // Build sequence of MIDI notes
+  const ascending = intervals.map(iv => startMidi + iv);
+  ascending.push(startMidi + 12); // octave
+  let sequence = [];
+  if (direction === 'asc') sequence = ascending;
+  else if (direction === 'desc') sequence = [...ascending].reverse();
+  else sequence = [...ascending, ...ascending.slice(0, -1).reverse()];
+
+  const beatMs = 60000 / state.bpm;
+  const noteDur = (beatMs / 1000) * 0.85;
+
+  for (let i = 0; i < sequence.length; i++) {
+    if (!state.playing) break;
+    const midi = sequence[i];
+    const dot = findFirstFingerboardPosition(null, midi);
+    if (state.soundOn) audio.playNote(midiToFreq(midi), noteDur, state.instrument);
+    if (dot) {
+      dot.classList.remove('playing');
+      void dot.offsetWidth;
+      dot.classList.add('playing');
+      setTimeout(() => dot.classList.remove('playing'), Math.min(600, beatMs - 50));
+    }
+    await new Promise(resolve => {
+      const t = setTimeout(resolve, beatMs);
+      state.playTimers.push(t);
+    });
+  }
+  state.playing = false;
+  document.getElementById('playBtn').disabled = false;
+}
+
+function stopPlay() {
+  state.playing = false;
+  state.playTimers.forEach(t => clearTimeout(t));
+  state.playTimers = [];
+  audio.stopAll();
+  document.getElementById('playBtn').disabled = false;
+  document.querySelectorAll('.note-dot.playing').forEach(d => d.classList.remove('playing'));
+}
+
+// ============================================================
+//   INFO MODAL
+// ============================================================
+function openInfoModal() {
+  const info = SCALE_INFO[state.scaleKey] || { desc: 'Tiada maklumat.', mood: '—', examples: '—' };
+  const rootName = (state.useFlats ? NOTES_FLAT : NOTES_SHARP)[state.rootPc];
+  document.getElementById('modalTitle').textContent = `${rootName} ${SCALES[state.scaleKey].name}`;
+  document.getElementById('modalDescription').textContent = info.desc;
+  document.getElementById('modalMood').textContent = info.mood;
+  document.getElementById('modalExamples').textContent = info.examples;
+  document.getElementById('modalOverlay').classList.add('visible');
+}
+function closeInfoModal() {
+  document.getElementById('modalOverlay').classList.remove('visible');
+}
+
+// ============================================================
+//   EVENT WIRING
+// ============================================================
+function rebuild() {
+  buildFingerboard();
+  updateInfoPanel();
+}
+
+document.getElementById('instrument').addEventListener('change', (e) => {
+  state.instrument = e.target.value;
+  rebuild();
+});
+document.getElementById('rootNote').addEventListener('change', (e) => {
+  state.rootPc = parseInt(e.target.value);
+  rebuild();
+});
+document.getElementById('scaleType').addEventListener('change', (e) => {
+  state.scaleKey = e.target.value;
+  rebuild();
+});
+document.getElementById('fretRange').addEventListener('change', (e) => {
+  state.fretRange = parseInt(e.target.value);
+  rebuild();
+});
+document.getElementById('useFlats').addEventListener('change', (e) => {
+  state.useFlats = e.target.checked;
+  populateRootSelect();
+  rebuild();
+});
+document.getElementById('showDegrees').addEventListener('change', (e) => {
+  state.showDegrees = e.target.checked;
+  rebuild();
+});
+document.getElementById('showGhosts').addEventListener('change', (e) => {
+  state.showGhosts = e.target.checked;
+  rebuild();
+});
+document.getElementById('soundOn').addEventListener('change', (e) => {
+  state.soundOn = e.target.checked;
+});
+document.getElementById('bpm').addEventListener('input', (e) => {
+  state.bpm = parseInt(e.target.value);
+  document.getElementById('bpmValue').textContent = state.bpm;
+});
+document.getElementById('playBtn').addEventListener('click', () => {
+  audio.init();
+  audio.ensureRunning();
+  if (state.playing) stopPlay();
+  playScale();
+});
+document.getElementById('stopBtn').addEventListener('click', stopPlay);
+document.getElementById('infoBtn').addEventListener('click', openInfoModal);
+document.getElementById('closeModal').addEventListener('click', closeInfoModal);
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'modalOverlay') closeInfoModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeInfoModal();
+  if (e.key === ' ' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON') {
+    e.preventDefault();
+    audio.init();
+    audio.ensureRunning();
+    if (state.playing) stopPlay();
+    else playScale();
+  }
+});
+
+// ============================================================
+//   INIT
+// ============================================================
+populateRootSelect();
+populateScaleSelect();
+// Override the initial computeDegrees with the smarter version
+window.computeDegrees = computeDegreesSmart;
+// Re-bind getCurrentScaleNotes to use smart degrees
+const _origGet = getCurrentScaleNotes;
+window.getCurrentScaleNotes = function() {
+  const r = _origGet();
+  r.degrees = computeDegreesSmart(r.intervals);
+  return r;
+};
+rebuild();
+
+// iOS Safari: unlock AudioContext on first touch anywhere
+const unlockAudio = () => {
+  audio.init();
+  audio.ensureRunning();
+  document.removeEventListener('touchstart', unlockAudio);
+  document.removeEventListener('touchend', unlockAudio);
+  document.removeEventListener('mousedown', unlockAudio);
+};
+document.addEventListener('touchstart', unlockAudio, { passive: true });
+document.addEventListener('touchend', unlockAudio, { passive: true });
+document.addEventListener('mousedown', unlockAudio);
+
+
+</script>
+</body>
+</html>
